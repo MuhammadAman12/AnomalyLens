@@ -136,15 +136,25 @@ if len(selected_columns) < 2:
     st.stop()
 
 
-algorithm = st.selectbox(
-    "Choose detection algorithm",
+detection_mode = st.radio(
+    "Detection Mode",
     [
-        "Isolation Forest",
-        "Local Outlier Factor",
-        "DBSCAN"
-    ]
+        "Single Algorithm",
+        "Compare All Algorithms"
+    ],
+    horizontal=True
 )
 
+if detection_mode == "Single Algorithm":
+
+    algorithm = st.selectbox(
+        "Choose detection algorithm",
+        [
+            "Isolation Forest",
+            "Local Outlier Factor",
+            "DBSCAN"
+        ]
+    )
 
 contamination = st.slider(
     "Expected anomaly percentage",
@@ -169,166 +179,277 @@ if st.button(
     # Handle missing values
     X = X.fillna(X.median())
 
-
     # --------------------------------------------------
-    # ISOLATION FOREST
+    # SINGLE ALGORITHM MODE
     # --------------------------------------------------
 
-    if algorithm == "Isolation Forest":
+    if detection_mode == "Single Algorithm":
 
-        model = IsolationForest(
-            contamination=contamination,
-            random_state=42
+        if algorithm == "Isolation Forest":
+
+            model = IsolationForest(
+                contamination=contamination,
+                random_state=42
+            )
+
+            predictions = model.fit_predict(X)
+
+        elif algorithm == "Local Outlier Factor":
+
+            model = LocalOutlierFactor(
+                n_neighbors=20,
+                contamination=contamination
+            )
+
+            predictions = model.fit_predict(X)
+
+        else:
+
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+
+            model = DBSCAN(
+                eps=0.8,
+                min_samples=10
+            )
+
+            predictions = model.fit_predict(X_scaled)
+
+            predictions = [
+                -1 if label == -1 else 1
+                for label in predictions
+            ]
+
+        # Create results
+        results = df.copy()
+
+        results["Anomaly"] = predictions
+
+        results["Anomaly"] = results["Anomaly"].map({
+            1: "Normal",
+            -1: "Anomaly"
+        })
+
+        # Calculate metrics
+        anomaly_count = (
+            results["Anomaly"] == "Anomaly"
+        ).sum()
+
+        normal_count = (
+            results["Anomaly"] == "Normal"
+        ).sum()
+
+        anomaly_percentage = (
+            anomaly_count / len(results)
+        ) * 100
+
+        # Results
+        st.subheader("📊 Detection Results")
+
+        result_col1, result_col2, result_col3 = st.columns(3)
+
+        result_col1.metric(
+            "Total Records",
+            f"{len(results):,}"
         )
 
-        predictions = model.fit_predict(X)
-
-
-    # --------------------------------------------------
-    # LOCAL OUTLIER FACTOR
-    # --------------------------------------------------
-
-    elif algorithm == "Local Outlier Factor":
-
-        model = LocalOutlierFactor(
-            n_neighbors=20,
-            contamination=contamination
+        result_col2.metric(
+            "Normal Records",
+            f"{normal_count:,}"
         )
 
-        predictions = model.fit_predict(X)
+        result_col3.metric(
+            "Anomalies",
+            f"{anomaly_count:,}",
+            f"{anomaly_percentage:.1f}%"
+        )
 
+        # Visualization
+        st.subheader("📈 Anomaly Visualization")
+
+        fig = px.scatter(
+            results,
+            x=selected_columns[0],
+            y=selected_columns[1],
+            color="Anomaly",
+            hover_data=selected_columns,
+            title=(
+                f"{algorithm}: "
+                f"{selected_columns[0]} vs "
+                f"{selected_columns[1]}"
+            )
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        # Anomaly table
+        st.subheader("🔎 Detected Anomalies")
+
+        anomalies = results[
+            results["Anomaly"] == "Anomaly"
+        ]
+
+        st.dataframe(
+            anomalies,
+            use_container_width=True
+        )
+
+        # Download
+        csv = results.to_csv(index=False)
+
+        st.download_button(
+            "⬇️ Download Full Results",
+            data=csv,
+            file_name="anomaly_results.csv",
+            mime="text/csv"
+        )
 
     # --------------------------------------------------
-    # DBSCAN
+    # COMPARE ALL ALGORITHMS
     # --------------------------------------------------
 
     else:
 
-        scaler = StandardScaler()
+        # Isolation Forest
+        isolation_model = IsolationForest(
+            contamination=contamination,
+            random_state=42
+        )
 
+        isolation_predictions = (
+            isolation_model.fit_predict(X)
+        )
+
+        # Local Outlier Factor
+        lof_model = LocalOutlierFactor(
+            n_neighbors=20,
+            contamination=contamination
+        )
+
+        lof_predictions = (
+            lof_model.fit_predict(X)
+        )
+
+        # DBSCAN
+        scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
 
-        model = DBSCAN(
+        dbscan_model = DBSCAN(
             eps=0.8,
             min_samples=10
         )
 
-        predictions = model.fit_predict(X_scaled)
+        dbscan_predictions = (
+            dbscan_model.fit_predict(X_scaled)
+        )
 
-        # DBSCAN labels noise points as -1.
-        # Convert all cluster points to normal.
-        predictions = [
+        dbscan_predictions = [
             -1 if label == -1 else 1
-            for label in predictions
+            for label in dbscan_predictions
         ]
 
+        # Count anomalies
+        isolation_count = (
+            isolation_predictions == -1
+        ).sum()
 
-    # --------------------------------------------------
-    # CREATE RESULTS
-    # --------------------------------------------------
+        lof_count = (
+            lof_predictions == -1
+        ).sum()
 
-    results = df.copy()
+        dbscan_count = (
+            pd.Series(dbscan_predictions) == -1
+        ).sum()
 
-    results["Anomaly"] = predictions
+        # Comparison DataFrame
+        comparison = pd.DataFrame({
+            "Algorithm": [
+                "Isolation Forest",
+                "Local Outlier Factor",
+                "DBSCAN"
+            ],
+            "Anomalies Detected": [
+                isolation_count,
+                lof_count,
+                dbscan_count
+            ]
+        })
 
-    results["Anomaly"] = results["Anomaly"].map({
-        1: "Normal",
-        -1: "Anomaly"
-    })
-
-
-    # --------------------------------------------------
-    # CALCULATE METRICS
-    # --------------------------------------------------
-
-    anomaly_count = (
-        results["Anomaly"] == "Anomaly"
-    ).sum()
-
-    normal_count = (
-        results["Anomaly"] == "Normal"
-    ).sum()
-
-    anomaly_percentage = (
-        anomaly_count / len(results)
-    ) * 100
-
-
-    # --------------------------------------------------
-    # RESULTS
-    # --------------------------------------------------
-
-    st.subheader("📊 Detection Results")
-
-    result_col1, result_col2, result_col3 = st.columns(3)
-
-    result_col1.metric(
-        "Total Records",
-        f"{len(results):,}"
-    )
-
-    result_col2.metric(
-        "Normal Records",
-        f"{normal_count:,}"
-    )
-
-    result_col3.metric(
-        "Anomalies",
-        f"{anomaly_count:,}",
-        f"{anomaly_percentage:.1f}%"
-    )
-
-
-    # --------------------------------------------------
-    # VISUALIZATION
-    # --------------------------------------------------
-
-    st.subheader("📈 Anomaly Visualization")
-
-    fig = px.scatter(
-        results,
-        x=selected_columns[0],
-        y=selected_columns[1],
-        color="Anomaly",
-        hover_data=selected_columns,
-        title=(
-            f"{algorithm}: "
-            f"{selected_columns[0]} vs "
-            f"{selected_columns[1]}"
+        comparison["Anomaly Percentage"] = (
+            comparison["Anomalies Detected"]
+            / len(df)
+            * 100
         )
-    )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+        # Display comparison
+        st.subheader("🤖 Algorithm Comparison")
 
+        st.dataframe(
+            comparison,
+            use_container_width=True,
+            hide_index=True
+        )
 
-    # --------------------------------------------------
-    # ANOMALY TABLE
-    # --------------------------------------------------
+        # Comparison chart
+        fig = px.bar(
+            comparison,
+            x="Algorithm",
+            y="Anomalies Detected",
+            text="Anomalies Detected",
+            title="Anomalies Detected by Algorithm"
+        )
 
-    st.subheader("🔎 Detected Anomalies")
+        fig.update_traces(
+            textposition="outside"
+        )
 
-    anomalies = results[
-        results["Anomaly"] == "Anomaly"
-    ]
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-    st.dataframe(
-        anomalies,
-        use_container_width=True
-    )
+        # Algorithm agreement
+        agreement = pd.DataFrame({
+            "Isolation Forest": isolation_predictions == -1,
+            "Local Outlier Factor": lof_predictions == -1,
+            "DBSCAN": (
+                pd.Series(dbscan_predictions).values == -1
+            )
+        })
 
+        agreement["Algorithms Agree"] = (
+            agreement.sum(axis=1)
+        )
 
-    # --------------------------------------------------
-    # DOWNLOAD RESULTS
-    # --------------------------------------------------
+        st.subheader("🔎 Algorithm Agreement")
 
-    csv = results.to_csv(index=False)
+        agreement_counts = (
+            agreement["Algorithms Agree"]
+            .value_counts()
+            .sort_index()
+        )
 
-    st.download_button(
-        "⬇️ Download Full Results",
-        data=csv,
-        file_name="anomaly_results.csv",
-        mime="text/csv"
-    )
+        agreement_chart = pd.DataFrame({
+            "Number of Algorithms": agreement_counts.index,
+            "Number of Records": agreement_counts.values
+        })
+
+        fig_agreement = px.bar(
+            agreement_chart,
+            x="Number of Algorithms",
+            y="Number of Records",
+            text="Number of Records",
+            title="How Many Algorithms Flagged Each Record?"
+        )
+
+        fig_agreement.update_traces(
+            textposition="outside"
+        )
+
+        st.plotly_chart(
+            fig_agreement,
+            use_container_width=True
+        )
