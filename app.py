@@ -4,6 +4,13 @@ import plotly.express as px
 
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+
+
+# --------------------------------------------------
+# PAGE CONFIGURATION
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="AnomalyLens",
@@ -11,7 +18,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# Header
+
+# --------------------------------------------------
+# HEADER
+# --------------------------------------------------
+
 st.title("🔍 AnomalyLens")
 st.markdown("### Machine Learning Anomaly Detection Platform")
 
@@ -20,7 +31,11 @@ st.write(
     "machine learning to identify unusual observations."
 )
 
-# File upload
+
+# --------------------------------------------------
+# FILE UPLOAD
+# --------------------------------------------------
+
 uploaded_file = st.file_uploader(
     "Upload CSV or Excel dataset",
     type=["csv", "xlsx"]
@@ -30,7 +45,11 @@ if uploaded_file is None:
     st.info("Upload a dataset to begin.")
     st.stop()
 
-# Load dataset
+
+# --------------------------------------------------
+# LOAD DATASET
+# --------------------------------------------------
+
 try:
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
@@ -41,28 +60,45 @@ except Exception as e:
     st.error(f"Could not read the dataset: {e}")
     st.stop()
 
+
 st.success(
     f"Dataset loaded successfully: "
     f"{df.shape[0]:,} rows × {df.shape[1]} columns"
 )
 
-# Dataset overview
+
+# --------------------------------------------------
+# DATASET OVERVIEW
+# --------------------------------------------------
+
 st.subheader("📋 Dataset Overview")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Rows", f"{len(df):,}")
-col2.metric("Columns", len(df.columns))
+col1.metric(
+    "Rows",
+    f"{len(df):,}"
+)
+
+col2.metric(
+    "Columns",
+    len(df.columns)
+)
 
 numeric_columns = df.select_dtypes(
     include="number"
 ).columns.tolist()
 
-col3.metric("Numeric Features", len(numeric_columns))
+col3.metric(
+    "Numeric Features",
+    len(numeric_columns)
+)
+
 col4.metric(
     "Missing Values",
     int(df.isna().sum().sum())
 )
+
 
 with st.expander("Preview Dataset"):
     st.dataframe(
@@ -70,7 +106,11 @@ with st.expander("Preview Dataset"):
         use_container_width=True
     )
 
-# Validate features
+
+# --------------------------------------------------
+# VALIDATE FEATURES
+# --------------------------------------------------
+
 if len(numeric_columns) < 2:
     st.error(
         "The dataset needs at least two numerical columns "
@@ -78,7 +118,11 @@ if len(numeric_columns) < 2:
     )
     st.stop()
 
-# Detection settings
+
+# --------------------------------------------------
+# DETECTION SETTINGS
+# --------------------------------------------------
+
 st.subheader("⚙️ Detection Settings")
 
 selected_columns = st.multiselect(
@@ -91,13 +135,16 @@ if len(selected_columns) < 2:
     st.warning("Select at least two features.")
     st.stop()
 
+
 algorithm = st.selectbox(
     "Choose detection algorithm",
     [
         "Isolation Forest",
-        "Local Outlier Factor"
+        "Local Outlier Factor",
+        "DBSCAN"
     ]
 )
+
 
 contamination = st.slider(
     "Expected anomaly percentage",
@@ -107,7 +154,11 @@ contamination = st.slider(
     step=0.01
 )
 
-# Detection
+
+# --------------------------------------------------
+# DETECTION
+# --------------------------------------------------
+
 if st.button(
     "🔍 Detect Anomalies",
     type="primary"
@@ -118,6 +169,11 @@ if st.button(
     # Handle missing values
     X = X.fillna(X.median())
 
+
+    # --------------------------------------------------
+    # ISOLATION FOREST
+    # --------------------------------------------------
+
     if algorithm == "Isolation Forest":
 
         model = IsolationForest(
@@ -127,7 +183,12 @@ if st.button(
 
         predictions = model.fit_predict(X)
 
-    else:
+
+    # --------------------------------------------------
+    # LOCAL OUTLIER FACTOR
+    # --------------------------------------------------
+
+    elif algorithm == "Local Outlier Factor":
 
         model = LocalOutlierFactor(
             n_neighbors=20,
@@ -135,6 +196,36 @@ if st.button(
         )
 
         predictions = model.fit_predict(X)
+
+
+    # --------------------------------------------------
+    # DBSCAN
+    # --------------------------------------------------
+
+    else:
+
+        scaler = StandardScaler()
+
+        X_scaled = scaler.fit_transform(X)
+
+        model = DBSCAN(
+            eps=0.8,
+            min_samples=10
+        )
+
+        predictions = model.fit_predict(X_scaled)
+
+        # DBSCAN labels noise points as -1.
+        # Convert all cluster points to normal.
+        predictions = [
+            -1 if label == -1 else 1
+            for label in predictions
+        ]
+
+
+    # --------------------------------------------------
+    # CREATE RESULTS
+    # --------------------------------------------------
 
     results = df.copy()
 
@@ -145,7 +236,11 @@ if st.button(
         -1: "Anomaly"
     })
 
-    # Calculate metrics
+
+    # --------------------------------------------------
+    # CALCULATE METRICS
+    # --------------------------------------------------
+
     anomaly_count = (
         results["Anomaly"] == "Anomaly"
     ).sum()
@@ -158,7 +253,11 @@ if st.button(
         anomaly_count / len(results)
     ) * 100
 
-    # Results
+
+    # --------------------------------------------------
+    # RESULTS
+    # --------------------------------------------------
+
     st.subheader("📊 Detection Results")
 
     result_col1, result_col2, result_col3 = st.columns(3)
@@ -179,7 +278,11 @@ if st.button(
         f"{anomaly_percentage:.1f}%"
     )
 
-    # Visualization
+
+    # --------------------------------------------------
+    # VISUALIZATION
+    # --------------------------------------------------
+
     st.subheader("📈 Anomaly Visualization")
 
     fig = px.scatter(
@@ -200,7 +303,11 @@ if st.button(
         use_container_width=True
     )
 
-    # Anomaly table
+
+    # --------------------------------------------------
+    # ANOMALY TABLE
+    # --------------------------------------------------
+
     st.subheader("🔎 Detected Anomalies")
 
     anomalies = results[
@@ -212,7 +319,11 @@ if st.button(
         use_container_width=True
     )
 
-    # Download results
+
+    # --------------------------------------------------
+    # DOWNLOAD RESULTS
+    # --------------------------------------------------
+
     csv = results.to_csv(index=False)
 
     st.download_button(
