@@ -2,9 +2,17 @@
 
 ### Machine Learning Anomaly Detection Platform
 
-AnomalyLens is an interactive machine learning application for detecting and analyzing unusual patterns in structured datasets.
+AnomalyLens is a machine learning project I built to explore how unsupervised learning can be used to detect unusual patterns in structured data.
 
-The platform allows users to upload CSV or Excel datasets, select relevant numerical features, apply unsupervised anomaly detection algorithms, visualize detected anomalies, and download the resulting dataset.
+The application allows users to upload CSV or Excel datasets, select numerical features, run anomaly detection algorithms, visualize the results, and download the processed dataset.
+
+---
+
+## 🎯 Why I Built This
+
+I wanted to build something that combines data analysis, machine learning, and application development in one project.
+
+Instead of only training a model in a notebook, AnomalyLens puts the detection process into an interactive application where a user can upload their own dataset and investigate the results.
 
 ---
 
@@ -12,37 +20,37 @@ The platform allows users to upload CSV or Excel datasets, select relevant numer
 
 - 📂 Upload CSV and Excel datasets
 - 📊 Automatic dataset overview
-- 🔢 Numerical feature detection
-- 🤖 Machine learning anomaly detection
+- 🔢 Automatic detection of numerical features
+- 🤖 Unsupervised anomaly detection
 - 🌲 Isolation Forest
 - 📍 Local Outlier Factor (LOF)
 - 📈 Interactive Plotly visualizations
-- 🔎 Anomaly investigation table
-- 📥 Downloadable detection results
+- 🔎 View detected anomalies
+- 📥 Download detection results
 - 🧹 Automatic handling of missing numerical values
-- ⚙️ Configurable anomaly contamination rate
+- ⚙️ Adjustable anomaly contamination rate
 
 ---
 
 ## 🧠 Machine Learning Approach
 
-AnomalyLens currently uses unsupervised machine learning techniques to identify observations that differ significantly from the majority of the dataset.
+AnomalyLens currently uses two unsupervised learning algorithms.
 
 ### Isolation Forest
 
-Isolation Forest identifies anomalies by randomly partitioning the feature space.
+Isolation Forest works by randomly partitioning the data. Observations that are easier to isolate are more likely to be considered anomalies.
 
-Anomalous observations tend to require fewer partitions to isolate compared with normal observations.
+It works well for finding unusual observations in larger datasets.
 
-### Local Outlier Factor
+### Local Outlier Factor (LOF)
 
-Local Outlier Factor (LOF) identifies observations whose local density differs significantly from that of their neighboring observations.
+LOF looks at the local density of observations and identifies points that are significantly less dense than their surrounding neighbors.
 
-This makes LOF useful for detecting anomalies that occur in localized regions of the feature space.
+This can be useful when anomalies occur in specific regions of the dataset rather than being globally unusual.
 
 ---
 
-## 🏗️ Application Architecture
+## 🏗️ How It Works
 
 ```text
                 ┌──────────────────────┐
@@ -59,7 +67,7 @@ This makes LOF useful for detecting anomalies that occur in localized regions of
                            │
                            ▼
                 ┌──────────────────────┐
-                │   ML Detection      │
+                │   ML Detection       │
                 │                      │
                 │ Isolation Forest     │
                 │ Local Outlier Factor │
@@ -67,31 +75,32 @@ This makes LOF useful for detecting anomalies that occur in localized regions of
                            │
                            ▼
                 ┌──────────────────────┐
-                │  Result Analysis     │
+                │   Result Analysis    │
                 │                      │
                 │ Metrics              │
-                │ Visualizations       │
+                │ Visualization        │
                 │ Anomaly Table        │
                 └──────────┬───────────┘
                            │
                            ▼
                 ┌──────────────────────┐
-                │   Export Results     │
-                │      CSV             │
+                │    Export Results    │
+                │        CSV           │
                 └──────────────────────┘
+```
 
-                ---
+---
 
 ## 🛠️ Technology Stack
 
 | Technology | Purpose |
 |------------|---------|
-| Python | Core programming language |
+| Python | Application and machine learning |
 | Pandas | Data processing |
-| NumPy | Numerical computing |
-| Scikit-learn | Machine learning |
-| Streamlit | Interactive web application |
-| Plotly | Interactive visualization |
+| NumPy | Numerical operations |
+| Scikit-learn | Machine learning algorithms |
+| Streamlit | Web application |
+| Plotly | Interactive visualizations |
 | Git & GitHub | Version control |
 
 ---
@@ -160,7 +169,7 @@ pip install -r requirements.txt
 
 ## ▶️ Running the Application
 
-Start the Streamlit application:
+Run:
 
 ```bash
 streamlit run app.py
@@ -172,7 +181,9 @@ The application will open in your browser.
 
 ## 🧪 Example Dataset
 
-The repository includes a synthetic transaction dataset containing:
+The repository includes a synthetic transaction dataset that I created for testing the application.
+
+The dataset contains:
 
 - 1,000 transactions
 - 950 normal transactions
@@ -186,44 +197,45 @@ The dataset includes features such as:
 - Transaction hour
 - Geographic distance
 
-The synthetic dataset is designed for demonstration and testing purposes.
+The injected anomalies are designed to have noticeably different characteristics from the normal transactions.
 
 ---
 
 ## 📊 Example Workflow
 
-1. Upload a dataset.
+1. Upload a CSV or Excel dataset.
 2. Review the dataset overview.
 3. Select numerical features.
 4. Choose an anomaly detection algorithm.
-5. Configure the expected anomaly percentage.
-6. Run anomaly detection.
-7. Analyze the interactive visualization.
-8. Review detected anomalies.
+5. Set the expected anomaly percentage.
+6. Run the detection process.
+7. Explore the interactive visualization.
+8. Review the detected anomalies.
 9. Download the results.
 
 ---
 
 ## 🔮 Future Improvements
 
+The project is still being developed. Planned improvements include:
+
 - [ ] DBSCAN anomaly detection
 - [ ] Algorithm comparison
-- [ ] Feature importance analysis
 - [ ] Anomaly scoring
-- [ ] Advanced statistical detection
-- [ ] More visualization options
+- [ ] Feature importance analysis
+- [ ] Additional visualization options
 - [ ] Automated model evaluation
-- [ ] REST API
-- [ ] Docker deployment
 - [ ] Automated testing
-- [ ] CI/CD with GitHub Actions
+- [ ] GitHub Actions CI/CD
+- [ ] Docker support
+- [ ] REST API
 - [ ] Cloud deployment
 
 ---
 
-## 🎯 Project Goals
+## 🎓 What This Project Demonstrates
 
-AnomalyLens was developed to demonstrate practical applications of:
+This project gives me practical experience with:
 
 - Unsupervised machine learning
 - Data preprocessing
@@ -231,11 +243,12 @@ AnomalyLens was developed to demonstrate practical applications of:
 - Interactive data visualization
 - Python application development
 - Machine learning model integration
-
-The project is designed as a practical portfolio project demonstrating the integration of data science and software engineering.
+- Git and GitHub workflow
 
 ---
 
-## 📄 License
+## 👤 Author
 
-This project is licensed under the MIT License.
+**Muhammad Aman**
+
+GitHub: [MuhammadAman12](https://github.com/MuhammadAman12)
