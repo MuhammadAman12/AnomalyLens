@@ -13,6 +13,18 @@ from src.scoring import (
     get_top_suspicious
 )
 
+from src.visualization import (
+    create_anomaly_scatter,
+    create_algorithm_comparison,
+    create_anomaly_distribution
+)
+
+from src.data_processing import (
+    load_dataset,
+    get_numeric_columns,
+    get_dataset_summary,
+    preview_dataset
+)
 # --------------------------------------------------
 # PAGE CONFIGURATION
 # --------------------------------------------------
@@ -56,16 +68,12 @@ if uploaded_file is None:
 # --------------------------------------------------
 
 try:
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
+    df = load_dataset(uploaded_file)
 
 except Exception as e:
     st.error(f"Could not read the dataset: {e}")
     st.stop()
-
-
+    
 st.success(
     f"Dataset loaded successfully: "
     f"{df.shape[0]:,} rows × {df.shape[1]} columns"
@@ -80,34 +88,24 @@ st.subheader("📋 Dataset Overview")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric(
-    "Rows",
-    f"{len(df):,}"
-)
+summary = get_dataset_summary(df)
 
-col2.metric(
-    "Columns",
-    len(df.columns)
-)
+col1.metric("Rows", f"{summary['rows']:,}")
 
-numeric_columns = df.select_dtypes(
-    include="number"
-).columns.tolist()
+col2.metric("Columns", summary["columns"])
 
-col3.metric(
-    "Numeric Features",
-    len(numeric_columns)
-)
 
-col4.metric(
-    "Missing Values",
-    int(df.isna().sum().sum())
-)
+numeric_columns = get_numeric_columns(df)
+
+col3.metric("Numeric Features", summary["numeric_features"])
+
+
+col4.metric("Missing Values", summary["missing_values"])
 
 
 with st.expander("Preview Dataset"):
     st.dataframe(
-        df.head(20),
+        preview_dataset(df),
         use_container_width=True
     )
 
@@ -251,17 +249,11 @@ if st.button(
         # Visualization
         st.subheader("📈 Anomaly Visualization")
 
-        fig = px.scatter(
+        fig = create_anomaly_scatter(
             results,
-            x=selected_columns[0],
-            y=selected_columns[1],
-            color="Anomaly",
-            hover_data=selected_columns,
-            title=(
-                f"{algorithm}: "
-                f"{selected_columns[0]} vs "
-                f"{selected_columns[1]}"
-            )
+            selected_columns[0],
+            selected_columns[1],
+            algorithm
         )
 
         st.plotly_chart(
@@ -369,17 +361,7 @@ if st.button(
         )
 
         # Comparison chart
-        fig = px.bar(
-            comparison,
-            x="Algorithm",
-            y="Anomalies Detected",
-            text="Anomalies Detected",
-            title="Anomalies Detected by Algorithm"
-        )
-
-        fig.update_traces(
-            textposition="outside"
-        )
+        fig = create_algorithm_comparison(comparison)
 
         st.plotly_chart(
             fig,
