@@ -2,11 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
+from src.anomaly_detection import (
+    prepare_features,
+    detect_anomalies,
+    compare_algorithms
+)
 
+from src.scoring import (
+    normalize_scores,
+    get_top_suspicious
+)
 
 # --------------------------------------------------
 # PAGE CONFIGURATION
@@ -185,45 +190,24 @@ if st.button(
 
     if detection_mode == "Single Algorithm":
 
-        if algorithm == "Isolation Forest":
+        predictions, raw_scores = detect_anomalies(
+            X,
+            algorithm,
+            contamination
+        )
 
-            model = IsolationForest(
-                contamination=contamination,
-                random_state=42
-            )
-
-            predictions = model.fit_predict(X)
-
-        elif algorithm == "Local Outlier Factor":
-
-            model = LocalOutlierFactor(
-                n_neighbors=20,
-                contamination=contamination
-            )
-
-            predictions = model.fit_predict(X)
-
+        # Normalize scores for algorithms that provide them
+        if raw_scores is not None:
+            anomaly_scores = normalize_scores(raw_scores)
         else:
-
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X)
-
-            model = DBSCAN(
-                eps=0.8,
-                min_samples=10
-            )
-
-            predictions = model.fit_predict(X_scaled)
-
-            predictions = [
-                -1 if label == -1 else 1
-                for label in predictions
-            ]
+            anomaly_scores = None
 
         # Create results
         results = df.copy()
-
         results["Anomaly"] = predictions
+
+        if anomaly_scores is not None:
+            results["Anomaly Score"] = anomaly_scores
 
         results["Anomaly"] = results["Anomaly"].map({
             1: "Normal",
@@ -297,6 +281,29 @@ if st.button(
             use_container_width=True
         )
 
+        # --------------------------------------------------
+        # TOP SUSPICIOUS RECORDS
+        # --------------------------------------------------
+
+        if "Anomaly Score" in results.columns:
+
+            st.subheader("🔥 Most Suspicious Records")
+
+            top_suspicious = (
+                results
+                .sort_values(
+                    "Anomaly Score",
+                    ascending=False
+                )
+                .head(10)
+            )
+
+            st.dataframe(
+                top_suspicious,
+                use_container_width=True,
+                hide_index=True
+            )
+
         # Download
         csv = results.to_csv(index=False)
 
@@ -313,55 +320,23 @@ if st.button(
 
     else:
 
-        # Isolation Forest
-        isolation_model = IsolationForest(
-            contamination=contamination,
-            random_state=42
+        # Run all anomaly detection algorithms
+        comparison_predictions = compare_algorithms(
+            X,
+            contamination
         )
-
-        isolation_predictions = (
-            isolation_model.fit_predict(X)
-        )
-
-        # Local Outlier Factor
-        lof_model = LocalOutlierFactor(
-            n_neighbors=20,
-            contamination=contamination
-        )
-
-        lof_predictions = (
-            lof_model.fit_predict(X)
-        )
-
-        # DBSCAN
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-
-        dbscan_model = DBSCAN(
-            eps=0.8,
-            min_samples=10
-        )
-
-        dbscan_predictions = (
-            dbscan_model.fit_predict(X_scaled)
-        )
-
-        dbscan_predictions = [
-            -1 if label == -1 else 1
-            for label in dbscan_predictions
-        ]
 
         # Count anomalies
         isolation_count = (
-            isolation_predictions == -1
+            comparison_predictions["Isolation Forest"] == -1
         ).sum()
 
         lof_count = (
-            lof_predictions == -1
+            comparison_predictions["Local Outlier Factor"] == -1
         ).sum()
 
         dbscan_count = (
-            pd.Series(dbscan_predictions) == -1
+            comparison_predictions["DBSCAN"] == -1
         ).sum()
 
         # Comparison DataFrame
@@ -411,12 +386,19 @@ if st.button(
             use_container_width=True
         )
 
-        # Algorithm agreement
+        # --------------------------------------------------
+        # ALGORITHM AGREEMENT
+        # --------------------------------------------------
+
         agreement = pd.DataFrame({
-            "Isolation Forest": isolation_predictions == -1,
-            "Local Outlier Factor": lof_predictions == -1,
+            "Isolation Forest": (
+                comparison_predictions["Isolation Forest"] == -1
+            ),
+            "Local Outlier Factor": (
+                comparison_predictions["Local Outlier Factor"] == -1
+            ),
             "DBSCAN": (
-                pd.Series(dbscan_predictions).values == -1
+                comparison_predictions["DBSCAN"] == -1
             )
         })
 
