@@ -56,3 +56,32 @@ jobs:
           echo "Streamlit failed to become healthy."
           cat /tmp/anomalylens-streamlit.log
           exit 1
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build --tag anomalylens:ci .
+
+      - name: Run Docker container smoke test
+        shell: bash
+        run: |
+          docker run --detach --name anomalylens-ci --publish 8501:8501 anomalylens:ci
+          trap 'docker rm --force anomalylens-ci >/dev/null 2>&1 || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:8501/_stcore/health > /dev/null; then
+              echo "Dockerized Streamlit health check passed."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Docker container failed to become healthy."
+          docker logs anomalylens-ci
+          exit 1
