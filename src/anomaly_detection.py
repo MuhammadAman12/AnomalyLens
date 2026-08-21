@@ -1,10 +1,5 @@
 import pandas as pd
 
-from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
-
 
 def prepare_features(df, selected_columns):
     """
@@ -15,43 +10,35 @@ def prepare_features(df, selected_columns):
     """
 
     X = df[selected_columns].copy()
-
     X = X.fillna(X.median())
-
     return X
 
 
 def detect_isolation_forest(X, contamination):
-    """
-    Detect anomalies using Isolation Forest.
-    """
+    """Detect anomalies using Isolation Forest."""
+
+    from sklearn.ensemble import IsolationForest
 
     model = IsolationForest(
         contamination=contamination,
-        random_state=42
+        random_state=42,
     )
-
     predictions = model.fit_predict(X)
-
     raw_scores = -model.decision_function(X)
-
     return predictions, raw_scores
 
 
 def detect_lof(X, contamination):
-    """
-    Detect anomalies using Local Outlier Factor.
-    """
+    """Detect anomalies using Local Outlier Factor."""
+
+    from sklearn.neighbors import LocalOutlierFactor
 
     model = LocalOutlierFactor(
         n_neighbors=20,
-        contamination=contamination
+        contamination=contamination,
     )
-
     predictions = model.fit_predict(X)
-
     raw_scores = -model.negative_outlier_factor_
-
     return predictions, raw_scores
 
 
@@ -62,93 +49,51 @@ def detect_dbscan(X):
     DBSCAN treats noise points as anomalies.
     """
 
-    scaler = StandardScaler()
+    from sklearn.cluster import DBSCAN
+    from sklearn.preprocessing import StandardScaler
 
+    scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
     model = DBSCAN(
         eps=0.8,
-        min_samples=10
+        min_samples=10,
     )
-
     predictions = model.fit_predict(X_scaled)
-
-    predictions = [
-        -1 if label == -1 else 1
-        for label in predictions
-    ]
-
+    predictions = [-1 if label == -1 else 1 for label in predictions]
     return predictions
 
 
-def detect_anomalies(
-    X,
-    algorithm,
-    contamination
-):
-    """
-    Run the selected anomaly detection algorithm.
-    """
+def detect_anomalies(X, algorithm, contamination):
+    """Run the selected anomaly detection algorithm."""
 
     if algorithm == "Isolation Forest":
+        return detect_isolation_forest(X, contamination)
 
-        predictions, raw_scores = detect_isolation_forest(
-            X,
-            contamination
-        )
+    if algorithm == "Local Outlier Factor":
+        return detect_lof(X, contamination)
 
-        return predictions, raw_scores
-
-
-    elif algorithm == "Local Outlier Factor":
-
-        predictions, raw_scores = detect_lof(
-            X,
-            contamination
-        )
-
-        return predictions, raw_scores
-
-
-    elif algorithm == "DBSCAN":
-
+    if algorithm == "DBSCAN":
         predictions = detect_dbscan(X)
-
         return predictions, None
 
-
-    else:
-
-        raise ValueError(
-            f"Unsupported algorithm: {algorithm}"
-        )
+    raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
-def compare_algorithms(
-    X,
-    contamination
-):
+def compare_algorithms(X, contamination):
     """
     Run all supported anomaly detection algorithms
     and return their predictions.
     """
 
-    isolation_predictions, _ = detect_isolation_forest(
-        X,
-        contamination
-    )
-
-    lof_predictions, _ = detect_lof(
-        X,
-        contamination
-    )
-
+    isolation_predictions, _ = detect_isolation_forest(X, contamination)
+    lof_predictions, _ = detect_lof(X, contamination)
     dbscan_predictions = detect_dbscan(X)
 
-    comparison = pd.DataFrame({
-        "Isolation Forest": isolation_predictions,
-        "Local Outlier Factor": lof_predictions,
-        "DBSCAN": dbscan_predictions
-    })
-
-    return comparison
+    return pd.DataFrame(
+        {
+            "Isolation Forest": isolation_predictions,
+            "Local Outlier Factor": lof_predictions,
+            "DBSCAN": dbscan_predictions,
+        }
+    )
