@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Compile Python sources
+        run: |
+          python -m py_compile app.py src/*.py tests/*.py
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Streamlit smoke test
+        shell: bash
+        run: |
+          streamlit run app.py --server.headless true --server.port 8501 > /tmp/anomalylens-streamlit.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:8501/_stcore/health > /dev/null; then
+              echo "Streamlit health check passed."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Streamlit failed to become healthy."
+          cat /tmp/anomalylens-streamlit.log
+          exit 1
