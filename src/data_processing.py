@@ -1,6 +1,15 @@
 import pandas as pd
 
 
+TARGET_COLUMN_NAMES = {
+    "ground_truth",
+    "is_anomaly",
+    "anomaly_label",
+    "label",
+    "target",
+}
+
+
 def load_dataset(uploaded_file):
     """Load a CSV or Excel dataset."""
 
@@ -22,13 +31,7 @@ def get_numeric_columns(df):
 
 
 def is_identifier_column(column_name):
-    """
-    Return True when a column name looks like an identifier.
-
-    Identifier-like numerical columns remain available for manual selection,
-    but are excluded from the default ML feature set because IDs usually
-    describe record identity rather than behaviour.
-    """
+    """Return True when a column name looks like a record identifier."""
 
     normalized = str(column_name).strip().lower()
 
@@ -50,38 +53,54 @@ def is_identifier_column(column_name):
     )
 
 
+def is_target_column(column_name):
+    """Return True when a column name looks like a known label/target column."""
+
+    return str(column_name).strip().lower() in TARGET_COLUMN_NAMES
+
+
+def get_model_feature_columns(df):
+    """
+    Return numerical columns that may be selected as model inputs.
+
+    Explicit label/target columns are excluded to prevent target leakage.
+    Identifier columns remain available for manual selection, but are not
+    selected by default.
+    """
+
+    return [
+        column
+        for column in get_numeric_columns(df)
+        if not is_target_column(column)
+    ]
+
+
 def get_default_feature_columns(df, max_features=4):
-    """
-    Choose sensible default numerical features for anomaly detection.
+    """Choose sensible default numerical features for anomaly detection."""
 
-    Identifier-like columns are skipped automatically. If too few
-    behavioural numerical columns remain, numeric columns are used as a
-    fallback so the user can still run the application.
-    """
-
-    numeric_columns = get_numeric_columns(df)
+    feature_columns = get_model_feature_columns(df)
 
     preferred = [
         column
-        for column in numeric_columns
+        for column in feature_columns
         if not is_identifier_column(column)
     ]
 
     if len(preferred) >= 2:
         return preferred[:max_features]
 
-    return numeric_columns[:max_features]
+    return feature_columns[:max_features]
 
 
 def get_dataset_summary(df):
     """Return basic dataset statistics."""
 
-    numeric_columns = get_numeric_columns(df)
+    feature_columns = get_model_feature_columns(df)
 
     return {
         "rows": len(df),
         "columns": len(df.columns),
-        "numeric_features": len(numeric_columns),
+        "numeric_features": len(feature_columns),
         "missing_values": int(df.isna().sum().sum()),
     }
 
