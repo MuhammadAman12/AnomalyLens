@@ -2,9 +2,14 @@
 
 ### Interactive Machine Learning Anomaly Detection Platform
 
+![CI](https://github.com/MuhammadAman12/AnomalyLens/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+
 AnomalyLens is a Streamlit-based machine learning application for detecting, comparing, evaluating, and investigating unusual patterns in structured datasets.
 
-The project combines data analysis, unsupervised machine learning, interactive visualization, model comparison, and investigation workflows in one application. Users can upload CSV or Excel data, select numerical features, run one or multiple anomaly detection models, inspect suspicious records, evaluate model performance when labels are available, and export results.
+The project combines data analysis, unsupervised machine learning, interactive visualization, model comparison, investigation workflows, automated testing, CI/CD checks, and containerized deployment in one portfolio-ready application.
 
 ---
 
@@ -14,7 +19,7 @@ I wanted to build something more practical than a notebook-only machine learning
 
 AnomalyLens turns anomaly detection into an interactive workflow where a user can move from raw data to model output, visual analysis, investigation, evaluation, and exportable findings without writing code.
 
-The architecture is intentionally modular so the project can continue evolving toward testing, CI/CD, APIs, deployment, and product-level capabilities.
+The architecture is intentionally modular so the project can continue evolving toward APIs, deployment, authentication, and product-level capabilities.
 
 ---
 
@@ -43,6 +48,12 @@ The architecture is intentionally modular so the project can continue evolving t
 - 🏆 Multi-model evaluation table with best-F1 identification
 - 📥 Export full analysis and model-comparison results to CSV
 - 🎨 Custom dark analytics dashboard with semantic KPI cards
+- ✅ Automated unit and visualization regression tests
+- 🔍 Ruff-based lint checks
+- ⚙️ GitHub Actions CI with compile, test, app health, and Docker smoke checks
+- 🐳 Docker and Docker Compose support
+- 📦 GitHub Container Registry publishing workflow for version tags
+- 🔄 Dependabot configuration for Python, Actions, and Docker dependencies
 
 ---
 
@@ -156,6 +167,10 @@ Isolation Forest     LOF             DBSCAN
 | Streamlit | Interactive web application |
 | Plotly | Interactive visualizations |
 | OpenPyXL | Excel file support |
+| Pytest | Automated testing |
+| Ruff | Static linting |
+| Docker | Containerized deployment |
+| GitHub Actions | CI and container publishing |
 | Git & GitHub | Version control and project history |
 
 ---
@@ -165,89 +180,112 @@ Isolation Forest     LOF             DBSCAN
 ```text
 AnomalyLens/
 │
+├── .github/
+│   ├── dependabot.yml
+│   └── workflows/
+│       ├── ci.yml
+│       └── docker-publish.yml
+│
+├── .streamlit/
+│   └── config.toml
+│
 ├── app.py
-├── README.md
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
 ├── requirements.txt
+├── requirements-dev.txt
+├── README.md
+├── SECURITY.md
+├── CONTRIBUTING.md
 ├── LICENSE
 │
 ├── data/
 │   └── transactions.csv
 │
-└── src/
-    ├── __init__.py
-    ├── anomaly_detection.py
-    ├── data_processing.py
-    ├── evaluation.py
-    ├── generate_data.py
-    ├── scoring.py
-    ├── ui_components.py
-    └── visualization.py
+├── src/
+│   ├── __init__.py
+│   ├── anomaly_detection.py
+│   ├── data_processing.py
+│   ├── evaluation.py
+│   ├── generate_data.py
+│   ├── scoring.py
+│   ├── ui_components.py
+│   └── visualization.py
+│
+└── tests/
+    ├── test_anomaly_detection.py
+    ├── test_data_processing.py
+    ├── test_evaluation.py
+    ├── test_scoring.py
+    └── test_visualization.py
 ```
-
-### Module Responsibilities
-
-- `app.py` — Streamlit dashboard flow and orchestration
-- `src/anomaly_detection.py` — model execution and feature preparation
-- `src/data_processing.py` — file loading, feature selection, dataset summaries, and target protection
-- `src/evaluation.py` — ground-truth detection and model evaluation metrics
-- `src/scoring.py` — anomaly-score normalization, severity, and suspicious-record ranking
-- `src/visualization.py` — themed Plotly visualizations
-- `src/ui_components.py` — dashboard styling and reusable visual components
-- `src/generate_data.py` — synthetic transaction data and ground-truth generation
 
 ---
 
 ## ⚙️ Installation
 
-### 1. Clone the repository
-
 ```bash
 git clone https://github.com/MuhammadAman12/AnomalyLens.git
 cd AnomalyLens
-```
-
-### 2. Create a virtual environment
-
-```bash
 python -m venv venv
 ```
 
-### 3. Activate the environment
-
-#### Windows PowerShell
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation for the current session:
+### Windows PowerShell
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+streamlit run app.py
 ```
 
-#### macOS / Linux
+### macOS / Linux
 
 ```bash
 source venv/bin/activate
-```
-
-### 4. Install dependencies
-
-```bash
 pip install -r requirements.txt
+streamlit run app.py
 ```
 
 ---
 
-## ▶️ Run the Application
+## 🧪 Development Checks
+
+Install development dependencies:
 
 ```bash
-streamlit run app.py
+pip install -r requirements-dev.txt
 ```
 
-Then open the local Streamlit address shown in the terminal.
+Run the same core checks used by CI:
+
+```bash
+ruff check app.py src tests
+python -m py_compile app.py src/*.py tests/*.py
+pytest
+```
+
+---
+
+## 🐳 Docker
+
+Build and run locally:
+
+```bash
+docker build -t anomalylens:local .
+docker run --rm -p 8501:8501 anomalylens:local
+```
+
+Or use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The application will be available at `http://localhost:8501`.
+
+See `DEPLOYMENT.md` for release and deployment guidance.
 
 ---
 
@@ -260,32 +298,9 @@ It contains 1,000 records:
 - 950 normal transactions
 - 50 intentionally injected anomalous transactions
 
-Example behavioral features include:
-
-- transaction amount
-- transaction frequency
-- account age
-- transaction hour
-- geographic distance
+Example behavioral features include transaction amount, frequency, account age, transaction hour, and geographic distance.
 
 The latest generator also writes a `ground_truth` column so model quality can be evaluated directly after regenerating the dataset.
-
-The dataset is intended for demonstration and testing rather than production benchmarking.
-
----
-
-## 📊 Typical Workflow
-
-1. Upload a CSV or Excel dataset.
-2. Review the dataset summary and preview.
-3. Select at least two numerical features.
-4. Choose Single Algorithm or Compare All Algorithms.
-5. Select the model when using single-model mode.
-6. Adjust the expected anomaly rate where applicable.
-7. Run the analysis.
-8. Explore Overview, Visualization, Comparison, Suspicious Records, and Evaluation.
-9. Review anomaly scores, severity, model agreement, or evaluation metrics.
-10. Export results to CSV.
 
 ---
 
@@ -307,16 +322,18 @@ Completed:
 - [x] Multi-model evaluation comparison
 - [x] Modular application architecture
 - [x] Custom dashboard styling
+- [x] Automated tests
+- [x] GitHub Actions CI
+- [x] Docker support
+- [x] Container publishing workflow
+- [x] Dependabot configuration
 
 Planned:
 
 - [ ] DBSCAN-specific anomaly scoring
 - [ ] Additional visual analytics
-- [ ] Automated tests
-- [ ] GitHub Actions CI/CD
-- [ ] Docker support
 - [ ] REST API separation
-- [ ] Cloud deployment
+- [ ] Public cloud deployment
 - [ ] Authentication and multi-user support
 
 ---
@@ -329,11 +346,13 @@ AnomalyLens demonstrates practical experience with:
 - data preprocessing
 - target leakage prevention
 - anomaly scoring and severity
-- model comparison
-- evaluation methodology
+- model comparison and evaluation
 - exploratory data analysis
 - interactive visualization
 - modular Python application design
+- automated testing and linting
+- CI/CD workflows
+- containerized deployment
 - Streamlit application development
 - Git and GitHub workflow
 
