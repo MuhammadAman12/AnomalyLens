@@ -4,34 +4,32 @@ import pandas as pd
 from src.anomaly_detection import (
     prepare_features,
     detect_anomalies,
-    compare_algorithms
+    compare_algorithms,
 )
-from src.scoring import (
-    normalize_scores,
-    get_top_suspicious
-)
+from src.scoring import normalize_scores, get_top_suspicious
 from src.visualization import (
     create_anomaly_scatter,
     create_algorithm_comparison,
-    create_anomaly_distribution
+    create_anomaly_distribution,
 )
 from src.data_processing import (
     load_dataset,
     get_numeric_columns,
+    get_default_feature_columns,
     get_dataset_summary,
-    preview_dataset
+    preview_dataset,
 )
 from src.ui_components import (
     apply_dashboard_styles,
     render_header,
-    render_dataset_metrics
+    render_dataset_metrics,
 )
 
 st.set_page_config(
     page_title="AnomalyLens",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 apply_dashboard_styles()
@@ -45,7 +43,7 @@ with st.sidebar:
     uploaded_file = st.file_uploader(
         "Upload dataset",
         type=["csv", "xlsx"],
-        help="Upload a CSV or Excel dataset for analysis."
+        help="Upload a CSV or Excel dataset for analysis.",
     )
 
 if uploaded_file is None:
@@ -62,7 +60,7 @@ if uploaded_file is None:
     <div style="margin-top:8px;color:#aeb9d6;line-height:1.6;">Compare Isolation Forest, Local Outlier Factor, and DBSCAN to identify unusual patterns from different perspectives.</div>
 </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with feature_col2:
@@ -74,7 +72,7 @@ if uploaded_file is None:
     <div style="margin-top:8px;color:#aeb9d6;line-height:1.6;">Explore model results through interactive visualizations, metrics, distributions, and ranked anomaly records.</div>
 </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with feature_col3:
@@ -86,7 +84,7 @@ if uploaded_file is None:
     <div style="margin-top:8px;color:#aeb9d6;line-height:1.6;">Prioritize suspicious records, investigate model agreement, and export results for deeper analysis.</div>
 </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     st.stop()
@@ -99,6 +97,7 @@ except Exception as e:
 
 summary = get_dataset_summary(df)
 numeric_columns = get_numeric_columns(df)
+default_features = get_default_feature_columns(df)
 
 if len(numeric_columns) < 2:
     st.error("This dataset needs at least two numerical columns for anomaly detection.")
@@ -111,19 +110,30 @@ with st.sidebar:
     selected_columns = st.multiselect(
         "Features",
         numeric_columns,
-        default=numeric_columns[:min(4, len(numeric_columns))],
-        help="Choose the numerical features that should be used by the anomaly detection models."
+        default=default_features,
+        help=(
+            "Choose the numerical features used by the models. "
+            "Identifier-like columns remain available but are excluded from the default selection."
+        ),
     )
+
+    identifier_defaults_skipped = [
+        column for column in numeric_columns if column not in default_features
+    ]
+    if identifier_defaults_skipped:
+        st.caption(
+            "ℹ️ Identifier-like numeric columns are not selected by default because they usually do not describe behavioural patterns."
+        )
 
     detection_mode = st.radio(
         "Detection Mode",
-        ["Single Algorithm", "Compare All Algorithms"]
+        ["Single Algorithm", "Compare All Algorithms"],
     )
 
     if detection_mode == "Single Algorithm":
         algorithm = st.selectbox(
             "Algorithm",
-            ["Isolation Forest", "Local Outlier Factor", "DBSCAN"]
+            ["Isolation Forest", "Local Outlier Factor", "DBSCAN"],
         )
     else:
         algorithm = None
@@ -134,7 +144,10 @@ with st.sidebar:
         max_value=0.20,
         value=0.05,
         step=0.01,
-        help="Used by Isolation Forest and Local Outlier Factor to estimate the expected proportion of anomalous records."
+        help=(
+            "Used by Isolation Forest and Local Outlier Factor to estimate "
+            "the expected proportion of anomalous records."
+        ),
     )
 
     st.caption(f"Expected anomalies: {contamination * 100:.0f}%")
@@ -149,7 +162,7 @@ with st.sidebar:
         "🔍 Run Analysis",
         type="primary",
         use_container_width=True,
-        disabled=not valid_feature_selection
+        disabled=not valid_feature_selection,
     )
 
     st.divider()
@@ -238,7 +251,7 @@ if run_detection:
                 results,
                 selected_columns[0],
                 selected_columns[1],
-                algorithm
+                algorithm,
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -275,7 +288,7 @@ if run_detection:
                 data=csv,
                 file_name="anomalylens_results.csv",
                 mime="text/csv",
-                use_container_width=True
+                use_container_width=True,
             )
 
     else:
@@ -285,19 +298,23 @@ if run_detection:
         lof_count = int((comparison_predictions["Local Outlier Factor"] == -1).sum())
         dbscan_count = int((comparison_predictions["DBSCAN"] == -1).sum())
 
-        comparison = pd.DataFrame({
-            "Algorithm": ["Isolation Forest", "Local Outlier Factor", "DBSCAN"],
-            "Anomalies Detected": [isolation_count, lof_count, dbscan_count]
-        })
+        comparison = pd.DataFrame(
+            {
+                "Algorithm": ["Isolation Forest", "Local Outlier Factor", "DBSCAN"],
+                "Anomalies Detected": [isolation_count, lof_count, dbscan_count],
+            }
+        )
         comparison["Anomaly Percentage"] = (
             comparison["Anomalies Detected"] / len(df) * 100
         ).round(2)
 
-        agreement = pd.DataFrame({
-            "Isolation Forest": comparison_predictions["Isolation Forest"] == -1,
-            "Local Outlier Factor": comparison_predictions["Local Outlier Factor"] == -1,
-            "DBSCAN": comparison_predictions["DBSCAN"] == -1
-        })
+        agreement = pd.DataFrame(
+            {
+                "Isolation Forest": comparison_predictions["Isolation Forest"] == -1,
+                "Local Outlier Factor": comparison_predictions["Local Outlier Factor"] == -1,
+                "DBSCAN": comparison_predictions["DBSCAN"] == -1,
+            }
+        )
         agreement["Algorithms Agree"] = agreement.sum(axis=1)
 
         all_three_count = int((agreement["Algorithms Agree"] == 3).sum())
@@ -339,15 +356,17 @@ if run_detection:
             st.divider()
             st.markdown("## 🔎 Algorithm Agreement")
             agreement_counts = agreement["Algorithms Agree"].value_counts().sort_index()
-            agreement_chart = pd.DataFrame({
-                "Algorithms Flagging Record": agreement_counts.index,
-                "Number of Records": agreement_counts.values
-            })
+            agreement_chart = pd.DataFrame(
+                {
+                    "Algorithms Flagging Record": agreement_counts.index,
+                    "Number of Records": agreement_counts.values,
+                }
+            )
             st.bar_chart(
                 agreement_chart,
                 x="Algorithms Flagging Record",
                 y="Number of Records",
-                use_container_width=True
+                use_container_width=True,
             )
             st.caption(
                 "A value of 3 means that Isolation Forest, Local Outlier Factor, and DBSCAN all flagged the same record."
@@ -363,18 +382,17 @@ if run_detection:
             consensus_results["Isolation Forest"] = agreement["Isolation Forest"].map(
                 {True: "Anomaly", False: "Normal"}
             )
-            consensus_results["Local Outlier Factor"] = agreement["Local Outlier Factor"].map(
-                {True: "Anomaly", False: "Normal"}
-            )
+            consensus_results["Local Outlier Factor"] = agreement[
+                "Local Outlier Factor"
+            ].map({True: "Anomaly", False: "Normal"})
             consensus_results["DBSCAN"] = agreement["DBSCAN"].map(
                 {True: "Anomaly", False: "Normal"}
             )
             consensus_results["Algorithms Agree"] = agreement["Algorithms Agree"]
 
-            consensus_anomalies = (
-                consensus_results[consensus_results["Algorithms Agree"] >= 2]
-                .sort_values("Algorithms Agree", ascending=False)
-            )
+            consensus_anomalies = consensus_results[
+                consensus_results["Algorithms Agree"] >= 2
+            ].sort_values("Algorithms Agree", ascending=False)
 
             st.dataframe(consensus_anomalies, use_container_width=True, hide_index=True)
             st.divider()
@@ -385,5 +403,5 @@ if run_detection:
                 data=consensus_csv,
                 file_name="anomalylens_model_comparison.csv",
                 mime="text/csv",
-                use_container_width=True
+                use_container_width=True,
             )
