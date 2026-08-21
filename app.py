@@ -86,42 +86,122 @@ if uploaded_file is None:
         "👈 Upload a CSV or Excel dataset from the sidebar to begin."
     )
 
-    st.markdown("### What AnomalyLens can do")
+    feature_col1, feature_col2, feature_col3 = st.columns(3)
+with feature_col1:
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(
+                145deg,
+                rgba(31, 42, 76, 0.95),
+                rgba(20, 29, 52, 0.95)
+            );
+            border: 1px solid rgba(86, 110, 255, 0.22);
+            border-radius: 16px;
+            padding: 22px;
+            min-height: 165px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+        ">
+            <div style="font-size:1.6rem;">🤖</div>
+            <div style="
+                font-size:1.05rem;
+                font-weight:700;
+                margin-top:10px;
+                color:#f4f6ff;
+            ">
+                Multiple ML Models
+            </div>
+            <div style="
+                margin-top:8px;
+                color:#aeb9d6;
+                line-height:1.6;
+            ">
+                Compare Isolation Forest, Local Outlier Factor,
+                and DBSCAN to identify unusual patterns from
+                different perspectives.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    col1, col2, col3 = st.columns(3)
+with feature_col2:
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(
+                145deg,
+                rgba(31, 42, 76, 0.95),
+                rgba(20, 29, 52, 0.95)
+            );
+            border: 1px solid rgba(124, 78, 255, 0.22);
+            border-radius: 16px;
+            padding: 22px;
+            min-height: 165px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+        ">
+            <div style="font-size:1.6rem;">📊</div>
+            <div style="
+                font-size:1.05rem;
+                font-weight:700;
+                margin-top:10px;
+                color:#f4f6ff;
+            ">
+                Interactive Analysis
+            </div>
+            <div style="
+                margin-top:8px;
+                color:#aeb9d6;
+                line-height:1.6;
+            ">
+                Explore model results through interactive
+                visualizations, metrics, distributions,
+                and ranked anomaly records.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with col1:
-        st.markdown(
-            """
-            **🤖 Multiple ML Models**
-
-            Compare Isolation Forest, Local Outlier Factor,
-            and DBSCAN.
-            """
-        )
-
-    with col2:
-        st.markdown(
-            """
-            **📊 Interactive Analysis**
-
-            Explore anomalies using interactive charts,
-            metrics, and ranked results.
-            """
-        )
-
-    with col3:
-        st.markdown(
-            """
-            **🔎 Investigation**
-
-            Identify suspicious records and export
-            results for further analysis.
-            """
-        )
+with feature_col3:
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(
+                145deg,
+                rgba(31, 42, 76, 0.95),
+                rgba(20, 29, 52, 0.95)
+            );
+            border: 1px solid rgba(49, 211, 159, 0.22);
+            border-radius: 16px;
+            padding: 22px;
+            min-height: 165px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+        ">
+            <div style="font-size:1.6rem;">🔎</div>
+            <div style="
+                font-size:1.05rem;
+                font-weight:700;
+                margin-top:10px;
+                color:#f4f6ff;
+            ">
+                Anomaly Investigation
+            </div>
+            <div style="
+                margin-top:8px;
+                color:#aeb9d6;
+                line-height:1.6;
+            ">
+                Prioritize suspicious records, investigate
+                model agreement, and export results for
+                deeper analysis.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.stop()
-
 
 # ==================================================
 # LOAD DATASET
@@ -136,8 +216,8 @@ except Exception as e:
     st.error(
         f"Could not read the dataset: {e}"
     )
-
     st.stop()
+
 
 
 # ==================================================
