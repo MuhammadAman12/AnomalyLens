@@ -2,9 +2,9 @@
 
 ### Interactive Machine Learning Anomaly Detection Platform
 
-AnomalyLens is a Streamlit-based machine learning application for detecting and investigating unusual patterns in structured datasets.
+AnomalyLens is a Streamlit-based machine learning application for detecting, comparing, evaluating, and investigating unusual patterns in structured datasets.
 
-The project was built to combine data analysis, unsupervised machine learning, visualization, and application development in one practical workflow. Users can upload their own CSV or Excel data, select numerical features, run one or multiple anomaly detection models, compare model behavior, investigate suspicious records, and export results.
+The project combines data analysis, unsupervised machine learning, interactive visualization, model comparison, and investigation workflows in one application. Users can upload CSV or Excel data, select numerical features, run one or multiple anomaly detection models, inspect suspicious records, evaluate model performance when labels are available, and export results.
 
 ---
 
@@ -12,9 +12,9 @@ The project was built to combine data analysis, unsupervised machine learning, v
 
 I wanted to build something more practical than a notebook-only machine learning project.
 
-AnomalyLens turns anomaly detection into an interactive application where a user can move from raw data to model results, visual analysis, and exportable findings without writing code.
+AnomalyLens turns anomaly detection into an interactive workflow where a user can move from raw data to model output, visual analysis, investigation, evaluation, and exportable findings without writing code.
 
-The project also gives me a platform that I can continue improving with better scoring, evaluation, deployment, and product features over time.
+The architecture is intentionally modular so the project can continue evolving toward testing, CI/CD, APIs, deployment, and product-level capabilities.
 
 ---
 
@@ -24,19 +24,25 @@ The project also gives me a platform that I can continue improving with better s
 - 📊 Automatic dataset overview and preview
 - 🔢 Automatic detection of numerical features
 - 🧹 Median-based handling of missing numerical values
-- 🎛️ Select the features used for anomaly detection
+- 🛡️ Target-label exclusion to prevent feature leakage
+- 🧠 Smarter default feature selection that skips identifier-like columns
 - 🌲 Isolation Forest
 - 📍 Local Outlier Factor (LOF)
 - 🧭 DBSCAN
 - 🔁 Single-model and multi-model comparison modes
 - 📈 Interactive Plotly visualizations
+- 🎚️ Selectable X/Y axes for anomaly scatter plots
 - 🍩 Normal-vs-anomaly distribution view
-- 🔥 Ranked suspicious records for scored models
 - 💯 Normalized anomaly scores from 0–100 for Isolation Forest and LOF
+- 🚨 Severity labels for scored anomalies
+- 🔥 Ranked suspicious-record investigation
 - 🤝 Multi-model agreement and consensus analysis
-- 🔎 Dedicated suspicious-record investigation view
+- 📊 Themed model-agreement visualization
+- 🎯 Precision, recall, F1 score, and accuracy when ground truth is available
+- 🧩 Confusion-matrix visualization for single-model evaluation
+- 🏆 Multi-model evaluation table with best-F1 identification
 - 📥 Export full analysis and model-comparison results to CSV
-- 🎨 Custom dark analytics dashboard styling
+- 🎨 Custom dark analytics dashboard with semantic KPI cards
 
 ---
 
@@ -48,7 +54,7 @@ AnomalyLens currently supports three unsupervised anomaly detection approaches.
 
 Isolation Forest identifies unusual observations by repeatedly partitioning the feature space. Records that can be isolated more quickly are more likely to be anomalous.
 
-AnomalyLens also converts the model's raw decision scores into a normalized 0–100 anomaly score, where higher values indicate more unusual observations.
+AnomalyLens converts the model's raw decision score into a normalized 0–100 anomaly score, where higher values indicate more unusual observations.
 
 ### Local Outlier Factor (LOF)
 
@@ -60,24 +66,46 @@ Its raw outlier scores are also normalized to a 0–100 scale for easier investi
 
 DBSCAN is a density-based clustering algorithm. Observations that do not belong to a sufficiently dense region are labeled as noise and treated as anomalies in AnomalyLens.
 
-The current DBSCAN implementation standardizes selected features before clustering and uses noise points as anomaly predictions. A dedicated normalized DBSCAN anomaly score is planned for a later version.
+Selected features are standardized before DBSCAN is run. A dedicated normalized DBSCAN anomaly score is planned for a later version.
 
 ---
 
 ## 🤖 Model Comparison
 
-AnomalyLens can run all three supported algorithms on the same selected feature set.
-
-Comparison mode shows:
+Comparison mode runs all three algorithms on the same selected feature set and shows:
 
 - anomalies detected by each algorithm
 - anomaly percentage by model
 - records flagged by at least two models
 - records flagged by all three models
 - model-agreement distribution
-- consensus records for further investigation
+- consensus records for investigation
+- model evaluation metrics when labels are available
 
-This is useful because different anomaly detection methods can identify different types of unusual behavior.
+This is useful because different anomaly detection methods identify different structures in the data.
+
+---
+
+## 🎯 Evaluation
+
+If a dataset contains a recognized binary anomaly label such as `ground_truth`, `is_anomaly`, `anomaly_label`, `label`, or `target`, AnomalyLens can evaluate predictions against it.
+
+For the bundled legacy synthetic sample, ground truth can also be reconstructed from the known injected anomaly transaction IDs.
+
+The Evaluation tab reports:
+
+- Precision
+- Recall
+- F1 score
+- Accuracy
+- True positives
+- False positives
+- False negatives
+- Confusion matrix
+
+In comparison mode, the application evaluates all three algorithms and highlights the best F1 score.
+
+Evaluation metrics are intentionally hidden for ordinary unlabeled datasets because unsupervised anomaly detection often operates without ground truth.
 
 ---
 
@@ -90,8 +118,9 @@ CSV / Excel
       ▼
 Data Processing
 Numeric feature detection
+Target leakage protection
+Identifier-aware defaults
 Missing-value handling
-Feature selection
       │
       ▼
 Detection Mode
@@ -105,12 +134,13 @@ Isolation Forest     LOF             DBSCAN
                       │
                       ▼
               Result Analysis
-          Metrics • Charts • Scores
-        Suspicious Records • Consensus
+       KPIs • Charts • Scores • Severity
+       Suspicious Records • Consensus
                       │
-                      ▼
-                 Export Results
-                      CSV
+          ┌───────────┴───────────┐
+          ▼                       ▼
+      Evaluation               Export
+   if labels exist              CSV
 ```
 
 ---
@@ -122,7 +152,7 @@ Isolation Forest     LOF             DBSCAN
 | Python | Application and ML logic |
 | Pandas | Dataset processing and result handling |
 | NumPy | Numerical operations |
-| Scikit-learn | Isolation Forest, LOF, DBSCAN, scaling |
+| Scikit-learn | Models, scaling, and evaluation metrics |
 | Streamlit | Interactive web application |
 | Plotly | Interactive visualizations |
 | OpenPyXL | Excel file support |
@@ -147,6 +177,7 @@ AnomalyLens/
     ├── __init__.py
     ├── anomaly_detection.py
     ├── data_processing.py
+    ├── evaluation.py
     ├── generate_data.py
     ├── scoring.py
     ├── ui_components.py
@@ -157,11 +188,12 @@ AnomalyLens/
 
 - `app.py` — Streamlit dashboard flow and orchestration
 - `src/anomaly_detection.py` — model execution and feature preparation
-- `src/data_processing.py` — file loading, dataset summaries, and previews
-- `src/scoring.py` — anomaly-score normalization and suspicious-record ranking
-- `src/visualization.py` — Plotly chart generation
-- `src/ui_components.py` — dashboard styling and reusable UI components
-- `src/generate_data.py` — synthetic transaction dataset generation
+- `src/data_processing.py` — file loading, feature selection, dataset summaries, and target protection
+- `src/evaluation.py` — ground-truth detection and model evaluation metrics
+- `src/scoring.py` — anomaly-score normalization, severity, and suspicious-record ranking
+- `src/visualization.py` — themed Plotly visualizations
+- `src/ui_components.py` — dashboard styling and reusable visual components
+- `src/generate_data.py` — synthetic transaction data and ground-truth generation
 
 ---
 
@@ -221,20 +253,22 @@ Then open the local Streamlit address shown in the terminal.
 
 ## 🧪 Example Dataset
 
-The repository includes a synthetic transaction dataset for testing the application.
+The repository includes a synthetic transaction dataset designed for testing anomaly detection.
 
 It contains 1,000 records:
 
 - 950 normal transactions
 - 50 intentionally injected anomalous transactions
 
-Example features include:
+Example behavioral features include:
 
 - transaction amount
 - transaction frequency
 - account age
 - transaction hour
 - geographic distance
+
+The latest generator also writes a `ground_truth` column so model quality can be evaluated directly after regenerating the dataset.
 
 The dataset is intended for demonstration and testing rather than production benchmarking.
 
@@ -249,9 +283,9 @@ The dataset is intended for demonstration and testing rather than production ben
 5. Select the model when using single-model mode.
 6. Adjust the expected anomaly rate where applicable.
 7. Run the analysis.
-8. Explore the Overview, Visualization, Comparison, and Suspicious Records tabs.
-9. Review anomaly scores or multi-model consensus.
-10. Export the results to CSV.
+8. Explore Overview, Visualization, Comparison, Suspicious Records, and Evaluation.
+9. Review anomaly scores, severity, model agreement, or evaluation metrics.
+10. Export results to CSV.
 
 ---
 
@@ -264,15 +298,19 @@ Completed:
 - [x] DBSCAN detection
 - [x] Multi-algorithm comparison
 - [x] Normalized anomaly scoring for Isolation Forest and LOF
+- [x] Severity-based suspicious-record ranking
 - [x] Consensus anomaly analysis
+- [x] Identifier-aware feature defaults
+- [x] Target leakage protection
+- [x] Precision, recall, F1, and accuracy evaluation
+- [x] Confusion-matrix reporting
+- [x] Multi-model evaluation comparison
 - [x] Modular application architecture
 - [x] Custom dashboard styling
 
 Planned:
 
 - [ ] DBSCAN-specific anomaly scoring
-- [ ] Evaluation against labeled/synthetic ground truth
-- [ ] Precision, recall, F1, and confusion-matrix reporting
 - [ ] Additional visual analytics
 - [ ] Automated tests
 - [ ] GitHub Actions CI/CD
@@ -289,10 +327,12 @@ AnomalyLens demonstrates practical experience with:
 
 - unsupervised machine learning
 - data preprocessing
-- anomaly scoring
+- target leakage prevention
+- anomaly scoring and severity
 - model comparison
+- evaluation methodology
 - exploratory data analysis
-- interactive data visualization
+- interactive visualization
 - modular Python application design
 - Streamlit application development
 - Git and GitHub workflow
