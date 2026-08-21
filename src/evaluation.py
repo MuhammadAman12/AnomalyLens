@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 
 
 GROUND_TRUTH_COLUMNS = (
@@ -77,6 +76,14 @@ def get_ground_truth(df):
 
 def evaluate_predictions(predictions, ground_truth):
     """Calculate classification metrics for anomaly predictions."""
+
+    from sklearn.metrics import (
+        accuracy_score,
+        confusion_matrix,
+        f1_score,
+        precision_score,
+        recall_score,
+    )
 
     predicted = pd.Series(predictions, index=ground_truth.index)
     predicted_binary = predicted.map({1: 0, -1: 1})
