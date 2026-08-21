@@ -2,14 +2,17 @@
 
 ### Interactive Machine Learning Anomaly Detection Platform
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://anomalylens.streamlit.app)
 ![CI](https://github.com/MuhammadAman12/AnomalyLens/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
+**Live app:** https://anomalylens.streamlit.app
+
 AnomalyLens is a Streamlit-based machine learning application for detecting, comparing, evaluating, and investigating unusual patterns in structured datasets.
 
-The project combines data analysis, unsupervised machine learning, interactive visualization, model comparison, investigation workflows, automated testing, CI/CD checks, and containerized deployment in one portfolio-ready application.
+The project combines data analysis, unsupervised machine learning, interactive visualization, model comparison, investigation workflows, automated testing, CI/CD checks, cloud deployment, and container support in one portfolio-ready application.
 
 ---
 
@@ -19,7 +22,7 @@ I wanted to build something more practical than a notebook-only machine learning
 
 AnomalyLens turns anomaly detection into an interactive workflow where a user can move from raw data to model output, visual analysis, investigation, evaluation, and exportable findings without writing code.
 
-The architecture is intentionally modular so the project can continue evolving toward APIs, deployment, authentication, and product-level capabilities.
+The architecture is intentionally modular so the project can continue evolving toward APIs, authentication, multi-user workflows, and product-level capabilities.
 
 ---
 
@@ -48,12 +51,14 @@ The architecture is intentionally modular so the project can continue evolving t
 - 🏆 Multi-model evaluation table with best-F1 identification
 - 📥 Export full analysis and model-comparison results to CSV
 - 🎨 Custom dark analytics dashboard with semantic KPI cards
+- ⚡ Lazy-loaded ML and visualization dependencies for faster startup
 - ✅ Automated unit and visualization regression tests
 - 🔍 Ruff-based lint checks
 - ⚙️ GitHub Actions CI with compile, test, app health, and Docker smoke checks
 - 🐳 Docker and Docker Compose support
 - 📦 GitHub Container Registry publishing workflow for version tags
 - 🔄 Dependabot configuration for Python, Actions, and Docker dependencies
+- ☁️ Public deployment on Streamlit Community Cloud
 
 ---
 
@@ -164,12 +169,12 @@ Isolation Forest     LOF             DBSCAN
 | Pandas | Dataset processing and result handling |
 | NumPy | Numerical operations |
 | Scikit-learn | Models, scaling, and evaluation metrics |
-| Streamlit | Interactive web application |
+| Streamlit | Interactive web application and public hosting |
 | Plotly | Interactive visualizations |
 | OpenPyXL | Excel file support |
 | Pytest | Automated testing |
 | Ruff | Static linting |
-| Docker | Containerized deployment |
+| Docker | Containerized deployment support |
 | GitHub Actions | CI and container publishing |
 | Git & GitHub | Version control and project history |
 
@@ -196,6 +201,7 @@ AnomalyLens/
 ├── requirements.txt
 ├── requirements-dev.txt
 ├── README.md
+├── CHANGELOG.md
 ├── SECURITY.md
 ├── CONTRIBUTING.md
 ├── LICENSE
@@ -289,6 +295,16 @@ See `DEPLOYMENT.md` for release and deployment guidance.
 
 ---
 
+## ☁️ Public Demo
+
+The portfolio build is deployed on Streamlit Community Cloud:
+
+**https://anomalylens.streamlit.app**
+
+The hosted version tracks the public `main` branch of this repository.
+
+---
+
 ## 🧪 Example Dataset
 
 The repository includes a synthetic transaction dataset designed for testing anomaly detection.
@@ -327,13 +343,14 @@ Completed:
 - [x] Docker support
 - [x] Container publishing workflow
 - [x] Dependabot configuration
+- [x] Public cloud deployment
+- [x] Startup-performance optimization with lazy imports
 
 Planned:
 
 - [ ] DBSCAN-specific anomaly scoring
 - [ ] Additional visual analytics
 - [ ] REST API separation
-- [ ] Public cloud deployment
 - [ ] Authentication and multi-user support
 
 ---
@@ -352,7 +369,9 @@ AnomalyLens demonstrates practical experience with:
 - modular Python application design
 - automated testing and linting
 - CI/CD workflows
-- containerized deployment
+- cloud deployment
+- containerized deployment support
+- performance-oriented lazy loading
 - Streamlit application development
 - Git and GitHub workflow
 
