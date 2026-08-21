@@ -1,5 +1,89 @@
 import plotly.express as px
-import pandas as pd
+
+
+# ==================================================
+# ANOMALYLENS CHART THEME
+# ==================================================
+
+BACKGROUND = "rgba(0,0,0,0)"
+PANEL = "rgba(16, 24, 44, 0.72)"
+TEXT = "#E7ECFF"
+MUTED_TEXT = "#98A6C7"
+GRID = "rgba(122, 139, 190, 0.16)"
+BORDER = "rgba(112, 130, 255, 0.18)"
+
+NORMAL_COLOR = "#2DD4BF"
+ANOMALY_COLOR = "#FB7185"
+
+MODEL_COLORS = {
+    "Isolation Forest": "#5B7CFA",
+    "Local Outlier Factor": "#A78BFA",
+    "DBSCAN": "#22D3EE"
+}
+
+
+def apply_chart_theme(fig, height=None):
+    """Apply the shared AnomalyLens dark analytics theme."""
+
+    fig.update_layout(
+        paper_bgcolor=BACKGROUND,
+        plot_bgcolor=BACKGROUND,
+        font=dict(
+            color=TEXT,
+            family="Inter, Segoe UI, Arial, sans-serif"
+        ),
+        title=dict(
+            font=dict(
+                size=20,
+                color=TEXT
+            ),
+            x=0.02,
+            xanchor="left"
+        ),
+        margin=dict(
+            l=28,
+            r=28,
+            t=72,
+            b=34
+        ),
+        hoverlabel=dict(
+            bgcolor="#151E35",
+            bordercolor="#5365D8",
+            font=dict(color="#F7F9FF")
+        ),
+        legend=dict(
+            bgcolor="rgba(0,0,0,0)",
+            font=dict(color=MUTED_TEXT)
+        )
+    )
+
+    if height is not None:
+        fig.update_layout(height=height)
+
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor=GRID,
+        zeroline=False,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED_TEXT),
+        title_font=dict(color=MUTED_TEXT)
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor=GRID,
+        zeroline=False,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED_TEXT),
+        title_font=dict(color=MUTED_TEXT)
+    )
+
+    return fig
+
+
+# ==================================================
+# ANOMALY SCATTER
+# ==================================================
 
 
 def create_anomaly_scatter(
@@ -8,83 +92,116 @@ def create_anomaly_scatter(
     y_column,
     algorithm
 ):
-    """
-    Create a 2D scatter plot showing normal
-    and anomalous observations.
-    """
+    """Create a polished scatter plot of normal and anomalous records."""
 
     fig = px.scatter(
         results,
         x=x_column,
         y=y_column,
         color="Anomaly",
+        color_discrete_map={
+            "Normal": NORMAL_COLOR,
+            "Anomaly": ANOMALY_COLOR
+        },
+        category_orders={
+            "Anomaly": ["Normal", "Anomaly"]
+        },
         hover_data=[
             column
             for column in results.columns
-            if column not in ["Anomaly"]
+            if column != "Anomaly"
         ],
-        title=(
-            f"{algorithm}: "
-            f"{x_column} vs {y_column}"
+        title=f"{algorithm}: {x_column} vs {y_column}"
+    )
+
+    apply_chart_theme(fig, height=520)
+
+    fig.update_layout(
+        legend_title_text="Record Status",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         )
     )
 
-    fig.update_layout(
-        height=500,
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
-        ),
-        legend_title_text="Status"
-    )
+    for trace in fig.data:
+        if trace.name == "Anomaly":
+            trace.update(
+                marker=dict(
+                    size=10,
+                    opacity=0.92,
+                    symbol="diamond",
+                    line=dict(
+                        width=1.2,
+                        color="#FFD0D8"
+                    )
+                )
+            )
+        else:
+            trace.update(
+                marker=dict(
+                    size=7,
+                    opacity=0.68,
+                    line=dict(width=0)
+                )
+            )
 
     return fig
 
 
-def create_algorithm_comparison(
-    comparison
-):
-    """
-    Create a bar chart comparing the number
-    of anomalies detected by each algorithm.
-    """
+# ==================================================
+# MODEL COMPARISON
+# ==================================================
+
+
+def create_algorithm_comparison(comparison):
+    """Create a polished bar chart comparing anomaly counts by model."""
 
     fig = px.bar(
         comparison,
         x="Algorithm",
         y="Anomalies Detected",
+        color="Algorithm",
+        color_discrete_map=MODEL_COLORS,
         text="Anomalies Detected",
         title="Algorithm Anomaly Comparison"
     )
 
+    apply_chart_theme(fig, height=460)
+
     fig.update_layout(
-        height=450,
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
-        ),
-        xaxis_title="Algorithm",
-        yaxis_title="Anomalies Detected"
+        showlegend=False,
+        xaxis_title=None,
+        yaxis_title="Anomalies Detected",
+        bargap=0.38
     )
 
     fig.update_traces(
-        textposition="outside"
+        textposition="outside",
+        textfont=dict(
+            color=TEXT,
+            size=13
+        ),
+        marker_line_width=0,
+        hovertemplate=(
+            "<b>%{x}</b><br>"
+            "Anomalies detected: %{y}<extra></extra>"
+        )
     )
 
     return fig
 
 
-def create_anomaly_distribution(
-    results
-):
-    """
-    Create a chart showing normal vs anomalous
-    observations.
-    """
+# ==================================================
+# ANOMALY DISTRIBUTION
+# ==================================================
+
+
+def create_anomaly_distribution(results):
+    """Create a donut chart showing normal vs anomalous records."""
 
     distribution = (
         results["Anomaly"]
@@ -92,27 +209,80 @@ def create_anomaly_distribution(
         .reset_index()
     )
 
-    distribution.columns = [
-        "Status",
-        "Count"
-    ]
+    distribution.columns = ["Status", "Count"]
+
+    anomaly_count = int(
+        distribution.loc[
+            distribution["Status"] == "Anomaly",
+            "Count"
+        ].sum()
+    )
+
+    total = int(distribution["Count"].sum())
+    anomaly_rate = (
+        anomaly_count / total * 100
+        if total
+        else 0
+    )
 
     fig = px.pie(
         distribution,
         names="Status",
         values="Count",
-        hole=0.55,
+        hole=0.66,
+        color="Status",
+        color_discrete_map={
+            "Normal": NORMAL_COLOR,
+            "Anomaly": ANOMALY_COLOR
+        },
+        category_orders={
+            "Status": ["Normal", "Anomaly"]
+        },
         title="Anomaly Distribution"
     )
 
-    fig.update_layout(
-        height=400,
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
+    apply_chart_theme(fig, height=410)
+
+    fig.update_traces(
+        textposition="inside",
+        textinfo="percent+label",
+        textfont=dict(
+            color="#F7F9FF",
+            size=13
+        ),
+        marker=dict(
+            line=dict(
+                color="#0B1020",
+                width=3
+            )
+        ),
+        hovertemplate=(
+            "<b>%{label}</b><br>"
+            "Records: %{value}<br>"
+            "Share: %{percent}<extra></extra>"
         )
+    )
+
+    fig.update_layout(
+        showlegend=False,
+        annotations=[
+            dict(
+                text=(
+                    f"<b>{anomaly_count:,}</b>"
+                    f"<br><span style='font-size:12px'>"
+                    f"{anomaly_rate:.1f}% anomalies"
+                    f"</span>"
+                ),
+                x=0.5,
+                y=0.5,
+                font=dict(
+                    size=22,
+                    color=TEXT
+                ),
+                showarrow=False,
+                align="center"
+            )
+        ]
     )
 
     return fig
