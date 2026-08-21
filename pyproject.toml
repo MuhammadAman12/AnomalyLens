@@ -8,8 +8,5 @@ line-length = 100
 src = ["app.py", "src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B"]
+select = ["E", "F", "B"]
 ignore = ["E501"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["src"]
