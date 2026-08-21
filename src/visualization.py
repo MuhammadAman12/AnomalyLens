@@ -1,7 +1,3 @@
-import plotly.express as px
-import plotly.graph_objects as go
-
-
 BACKGROUND = "rgba(0,0,0,0)"
 TEXT = "#E7ECFF"
 MUTED_TEXT = "#98A6C7"
@@ -61,6 +57,8 @@ def apply_chart_theme(fig, height=None):
 def create_anomaly_scatter(results, x_column, y_column, algorithm):
     """Create a polished scatter plot of normal and anomalous records."""
 
+    import plotly.express as px
+
     fig = px.scatter(
         results,
         x=x_column,
@@ -103,6 +101,8 @@ def create_anomaly_scatter(results, x_column, y_column, algorithm):
 def create_algorithm_comparison(comparison):
     """Create a polished bar chart comparing anomaly counts by model."""
 
+    import plotly.express as px
+
     fig = px.bar(
         comparison,
         x="Algorithm",
@@ -132,6 +132,8 @@ def create_algorithm_comparison(comparison):
 
 def create_agreement_chart(agreement_chart):
     """Create a themed chart showing how many models flag each record."""
+
+    import plotly.graph_objects as go
 
     color_map = {
         0: "#334155",
@@ -172,6 +174,8 @@ def create_agreement_chart(agreement_chart):
 
 def create_anomaly_distribution(results):
     """Create a donut chart showing normal vs anomalous records."""
+
+    import plotly.express as px
 
     distribution = results["Anomaly"].value_counts().reset_index()
     distribution.columns = ["Status", "Count"]
@@ -226,6 +230,8 @@ def create_anomaly_distribution(results):
 
 def create_confusion_matrix(metrics, algorithm):
     """Create a compact confusion-matrix heatmap from evaluation metrics."""
+
+    import plotly.graph_objects as go
 
     matrix = [
         [metrics["true_negatives"], metrics["false_positives"]],
