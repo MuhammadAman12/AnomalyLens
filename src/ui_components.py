@@ -170,7 +170,7 @@ def render_dataset_metrics(summary):
         ("Numeric Features", summary["numeric_features"], "cyan"),
         ("Missing Values", summary["missing_values"], "orange"),
     ]
-    for col, (label, value, accent) in zip(cols, items):
+    for col, (label, value, accent) in zip(cols, items, strict=True):
         with col:
             _render_kpi(label, value, accent)
 
@@ -183,7 +183,7 @@ def render_analysis_metrics(total, normal, anomalies, rate):
         ("Anomalies Detected", f"{anomalies:,}", "red", "Requires investigation"),
         ("Anomaly Rate", f"{rate:.1f}%", "orange", "Share of analyzed records"),
     ]
-    for col, item in zip(cols, items):
+    for col, item in zip(cols, items, strict=True):
         with col:
             _render_kpi(*item)
 
@@ -196,7 +196,7 @@ def render_comparison_metrics(isolation_count, lof_count, dbscan_count, consensu
         ("DBSCAN", f"{dbscan_count:,}", "cyan", "Noise points detected"),
         ("3-Model Consensus", f"{consensus_count:,}", "red", "Flagged by all models"),
     ]
-    for col, item in zip(cols, items):
+    for col, item in zip(cols, items, strict=True):
         with col:
             _render_kpi(*item)
 
@@ -223,7 +223,7 @@ def render_evaluation_metrics(metrics):
         ("F1 Score", f"{metrics['f1']:.1%}"),
         ("Accuracy", f"{metrics['accuracy']:.1%}"),
     ]
-    for col, (label, value) in zip(cols, items):
+    for col, (label, value) in zip(cols, items, strict=True):
         with col:
             st.markdown(
                 f'<div class="eval-card"><div class="eval-label">{label}</div><div class="eval-value">{value}</div></div>',
