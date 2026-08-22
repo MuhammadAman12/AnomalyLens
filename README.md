@@ -16,6 +16,14 @@ The project combines data analysis, unsupervised machine learning, interactive v
 
 ---
 
+## 🖥️ Dashboard Preview
+
+[![AnomalyLens Dashboard](dashboard.png)](https://anomalylens.streamlit.app)
+
+*Interactive dashboard preview — click the image to open the live Streamlit app.*
+
+---
+
 ## 🎯 Why I Built This
 
 I wanted to build something more practical than a notebook-only machine learning project.
